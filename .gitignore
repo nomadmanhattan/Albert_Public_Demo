@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Logs
+logs/
+*.log
+my_logs*.txt
+*output.txt
+browser_data/
+*.json
+*.png
+
+# Data
+data/
+certs/
+
+# IDE
+.vscode/
+.idea/

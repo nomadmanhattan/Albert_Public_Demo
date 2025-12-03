@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/browser_data:/app/browser_data
+      - ./backend/logs:/app/logs
+      - ./backend/certs:/app/certs
+      - ./backend/.env:/app/.env
+    environment:
+      - HEADLESS_BROWSER=true
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  browser_data:
