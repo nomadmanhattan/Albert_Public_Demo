@@ -19,3 +19,5 @@ opentelemetry-instrumentation-vertexai>=2.0b0
 
 google-auth
 google-cloud-logging
+google-auth-oauthlib
+google-auth-httplib2
