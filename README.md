@@ -5,9 +5,7 @@
 Albert is a friendly AI assistant that lives in your browser. He reads your inbox, understands your intent (e.g., "AI news", "Project updates"), and uses **Vertex AI Text-to-Speech** to turn it into an engaging audio podcast.
 
 Powered by **Google Agent Development Kit (ADK)** and **Gemini 2.5 Flash**, Albert uses a sophisticated multi-agent loop to ensure your digest is high-quality, witty, and concise.
-
-
-
+			
 ## Features
 
 -   **Semantic Search**: Just say "What's happening in AI?" or "Summarize my project updates". Albert uses **Gemini Embeddings** to find relevant emails even without explicit labels.
@@ -15,9 +13,7 @@ Powered by **Google Agent Development Kit (ADK)** and **Gemini 2.5 Flash**, Albe
 -   **Smart Memory**: Albert remembers your last query. Just say "Run it again" to get your usual fix.
 -   **Audio Magic**: Automatically uses Vertex AI Text-to-Speech to generate realistic, conversational audio mimic NYT Hardfork podcast style.
 -   **Fun Interface**: A playful, KAWS-inspired design that makes news less boring.
-
-
-
+			
 ## Architecture
 Albert is a personal concierge assistant built on top of **Google Agent Development Kit (ADK)** framework, employing a multi-agent loop powered by **Gemini 2.5 Flash** and **Vertex AI Text-to-Speech** services to deliver high-quality, witty, and concise daily digests for users on the go.
 
@@ -40,23 +36,89 @@ Albert is a personal concierge assistant built on top of **Google Agent Developm
             2.  It calls the `TextToSpeechService` directly.
             3.  The audio file is saved locally and a playback link is returned to the user.
 
+### Flowchart
+```mermaid
 
+graph TD
 
+  %% Client
+  U[User]
+  UI[Albert Web UI]
+  U --> UI
+
+  %% Backend
+  subgraph Backend
+    CONC[Concierge Agent]
+    EA[Email Aggregator]
+    D[Drafter]
+    C[Critic]
+    TTSWRAP[Text-to-Speech Wrapper]
+  end
+
+  UI -->|HTTP/API| CONC
+  CONC --> EA
+
+  %% Email aggregation
+  EA -->|Fetch emails| GM[Gmail API]
+
+  %% Content pipeline
+  EA --> D
+  D --> C
+  C --> D
+  C -->|Approved digest| CONC
+
+  %% Vertex AI
+  subgraph VertexAI
+    LLM[Gemini 2.5 Flash]
+    TTS[Vertex AI TTS]
+  end
+
+  D --> LLM
+  C --> LLM
+  LLM --> D
+  LLM --> C
+
+  %% TTS + storage
+  CONC -->|Final text| TTSWRAP
+  TTSWRAP --> TTS
+  TTS -->|Audio| GCS[Cloud Storage]
+  GCS -->|Playback URL| CONC
+  CONC --> UI
+
+  %% Observability
+  subgraph Observability
+    LOG[Cloud Logging]
+    TRACE[Cloud Trace]
+  end
+
+  CONC --> LOG
+  EA --> LOG
+  D --> LOG
+  C --> LOG
+  TTSWRAP --> LOG
+
+  CONC --> TRACE
+  EA --> TRACE
+  D --> TRACE
+  C --> TRACE
+  TTSWRAP --> TRACE
+
+```			
 ## Getting Started
 
 ### Prerequisites
 -   **Python 3.9+**
 -   **Node.js & npm**
 -   **Google Account** (for Gmail)
-
+		   
 ### Installation
-
+		
 1.  **Clone the repository**:
     ```bash
     git clone https://github.com/nomadmanhattan/Personal_News_Digest_Assistant.git
     cd Personal_News_Digest_Assistant
     ```
-
+					
 2.  **Backend Setup**:
     ```bash
     cd backend
@@ -65,19 +127,19 @@ Albert is a personal concierge assistant built on top of **Google Agent Developm
     pip install -r requirements.txt
     playwright install chromium
     ```
-
+				
 3.  **Frontend Setup**:
     ```bash
     cd ../frontend
     npm install
     ```
-
+		
 4.  **Environment Variables**:
     Create a `.env` file in `backend/` with your Google Cloud credentials (if using GCS) or Gemini API key.
     ```env
     GOOGLE_API_KEY=your_api_key_here
     ```
-
+			
 ### Running with Docker (Recommended)
 
 > **Important**: For the first run, you must run the backend **locally** (see below) to sign in to Google. This creates a session file that Docker will use.
@@ -105,13 +167,15 @@ Albert is a personal concierge assistant built on top of **Google Agent Developm
     ```
 
 3.  **Open your browser** to `http://localhost:5173`.
-
+			
 ### How to Use
 
 1.  **Say Hello**: Tell Albert what you want, e.g., "Make me a podcast about AI updates in the last 3 days".
 2.  **First Run**: Albert will ask you to log in to Gmail if you haven't already.
-3.  **Listen**: Wait a moment, and Albert will give you a link to your generated audio overview!
+3.  **Listen**: Wait a moment, and Albert will give you a link to your generated audio overview!              
 
+
+                     
 ## Observability & Evaluation
 
 Albert is designed with enterprise-grade observability to help you debug agent behavior and optimize performance.
