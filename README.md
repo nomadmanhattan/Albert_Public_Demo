@@ -17,6 +17,7 @@ Powered by **Google Agent Development Kit (ADK)** and **Gemini 2.5 Flash**, Albe
 -   **Fun Interface**: A playful, KAWS-inspired design that makes news less boring.
 
 
+
 ## Architecture
 Albert is a personal concierge assistant built on top of **Google Agent Development Kit (ADK)** framework, employing a multi-agent loop powered by **Gemini 2.5 Flash** and **Vertex AI Text-to-Speech** services to deliver high-quality, witty, and concise daily digests for users on the go.
 
@@ -40,88 +41,6 @@ Albert is a personal concierge assistant built on top of **Google Agent Developm
             3.  The audio file is saved locally and a playback link is returned to the user.
 
 
-~~~
-flowchart TD
-  subgraph Client["Client"]
-    U[User]
-    FE[React + Vite + Tailwind (Albert UI)]
-  end
-
-  U --> FE
-
-  subgraph Backend["Backend (FastAPI + Docker)"]
-    CONC[Concierge Agent (Orchestrator)]
-    subgraph ADK["Google Agent Development Kit (ADK) Pipeline"]
-      EA[Email Aggregator (Gmail + Semantic Filter)]
-      subgraph Loop["Refinement Loop (LoopAgent)"]
-        D[Drafter (Initial Digest)]
-        C[Critic (Review & Refine)]
-      end
-    end
-    TTS_SVC[TextToSpeechService Wrapper]
-  end
-
-  FE -->|REST / WebSocket| CONC
-
-  subgraph GoogleCloud["Google Cloud"]
-    subgraph GmailAPI["Gmail API"]
-      GM[Gmail Inbox]
-    end
-
-    subgraph VertexAI["Vertex AI"]
-      LLM[Gemini 2.5 Flash (Synthesis)]
-      TTS[Vertex AI Text-to-Speech]
-    end
-
-    subgraph Storage["Storage & Infra"]
-      GCS[Google Cloud Storage (Audio Files)]
-      LOG[Cloud Logging]
-      TRACE[Cloud Trace]
-    end
-  end
-
-  CONC --> ADK
-
-  EA --> GM
-  GM --> EA
-
-  EA --> D
-  D --> C
-  C --> D
-  C --> CONC
-
-  D --> LLM
-  C --> LLM
-  LLM --> D
-  LLM --> C
-
-  CONC --> TTS_SVC
-  TTS_SVC --> TTS
-  TTS --> GCS
-  GCS --> CONC
-  CONC --> FE
-
-  CONC --> LOG
-  EA --> LOG
-  D --> LOG
-  C --> LOG
-  TTS_SVC --> LOG
-
-  CONC --> TRACE
-
-~~~
-
-
-
-
-
-
-
-
-
-
-
-   
 
 ## Getting Started
 
