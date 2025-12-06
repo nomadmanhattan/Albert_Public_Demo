@@ -18,23 +18,23 @@ Powered by **Google Agent Development Kit (ADK)** and **Gemini 2.5 Flash**, Albe
 Albert is a personal concierge assistant built on top of **Google Agent Development Kit (ADK)** framework, employing a multi-agent loop powered by **Gemini 2.5 Flash** and **Vertex AI Text-to-Speech** services to deliver high-quality, witty, and concise daily digests for users on the go.
 
 1. **Concierge Agent (Orchestrator)**:
-        *   Manages the user session and coordinates the workflow.\
-        *   **Deterministic Handoff**: Once the content is ready, the Concierge *directly* calls the TTS service, ensuring 100% reliability.\
+        *   Manages the user session and coordinates the workflow.<br>
+        *   **Deterministic Handoff**: Once the content is ready, the Concierge *directly* calls the TTS service, ensuring 100% reliability.<br>
 
 2. **Content Generation Pipeline (Google ADK)**:
         *   **Email Aggregator**: Fetches up to 50 emails based on user intent and semantic search.
         *   **Refinement Loop (LoopAgent)**:
-            *   **Drafter**: Synthesizes the initial digest in the style of a news editor.\
-            *   **Critic**: Reviews the digest for quality, tone, and conciseness.\
-            *   *Loop continues until the Critic approves or max iterations reached.*\
+            *   **Drafter**: Synthesizes the initial digest in the style of a news editor.<br>
+            *   **Critic**: Reviews the digest for quality, tone, and conciseness.<br>
+            *   Loop continues until the Critic approves or max iterations reached.<br>
 
 3. **Audio Generation (Service Layer)**:
-        *   **Goal**: Convert the finalized text digest into an audio format ("podcast").\
-        *   **Tool**: **Google Cloud Vertex AI Text-to-Speech**.\
-        *   **Process**:
-            1.  The Concierge receives the approved text from the ADK pipeline.\
-            2.  It calls the `TextToSpeechService` directly.\
-            3.  The audio file is saved locally and a playback link is returned to the user.\
+        *   **Goal**: Convert the finalized text digest into an audio format ("podcast").<br>
+        *   **Tool**: **Google Cloud Vertex AI Text-to-Speech**.<br>
+        *   **Process**:<br>
+            1.  The Concierge receives the approved text from the ADK pipeline.<br>
+            2.  It calls the `TextToSpeechService` directly.<br>
+            3.  The audio file is saved locally and a playback link is returned to the user.<br>
 
 ### Flowchart
 ```mermaid
