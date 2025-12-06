@@ -39,6 +39,90 @@ Albert is a personal concierge assistant built on top of **Google Agent Developm
             2.  It calls the `TextToSpeechService` directly.
             3.  The audio file is saved locally and a playback link is returned to the user.
 
+
+~~~
+flowchart TD
+  subgraph Client["Client"]
+    U[User]
+    FE[React + Vite + Tailwind (Albert UI)]
+  end
+
+  U --> FE
+
+  subgraph Backend["Backend (FastAPI + Docker)"]
+    CONC[Concierge Agent (Orchestrator)]
+    subgraph ADK["Google Agent Development Kit (ADK) Pipeline"]
+      EA[Email Aggregator (Gmail + Semantic Filter)]
+      subgraph Loop["Refinement Loop (LoopAgent)"]
+        D[Drafter (Initial Digest)]
+        C[Critic (Review & Refine)]
+      end
+    end
+    TTS_SVC[TextToSpeechService Wrapper]
+  end
+
+  FE -->|REST / WebSocket| CONC
+
+  subgraph GoogleCloud["Google Cloud"]
+    subgraph GmailAPI["Gmail API"]
+      GM[Gmail Inbox]
+    end
+
+    subgraph VertexAI["Vertex AI"]
+      LLM[Gemini 2.5 Flash (Synthesis)]
+      TTS[Vertex AI Text-to-Speech]
+    end
+
+    subgraph Storage["Storage & Infra"]
+      GCS[Google Cloud Storage (Audio Files)]
+      LOG[Cloud Logging]
+      TRACE[Cloud Trace]
+    end
+  end
+
+  CONC --> ADK
+
+  EA --> GM
+  GM --> EA
+
+  EA --> D
+  D --> C
+  C --> D
+  C --> CONC
+
+  D --> LLM
+  C --> LLM
+  LLM --> D
+  LLM --> C
+
+  CONC --> TTS_SVC
+  TTS_SVC --> TTS
+  TTS --> GCS
+  GCS --> CONC
+  CONC --> FE
+
+  CONC --> LOG
+  EA --> LOG
+  D --> LOG
+  C --> LOG
+  TTS_SVC --> LOG
+
+  CONC --> TRACE
+
+~~~
+
+
+
+
+
+
+
+
+
+
+
+   
+
 ## Getting Started
 
 ### Prerequisites
