@@ -103,7 +103,37 @@ graph TD
   C --> TRACE
   TTSWRAP --> TRACE
 
-```			
+```	
+
+
+## Observability & Evaluation
+
+Albert is designed with enterprise-grade observability to help you debug agent behavior and optimize performance.
+
+### 1. Google Cloud Trace
+Visualize the full latency breakdown of your agent pipeline.
+-   **Trace Spans**: See exactly how long each step takes (e.g., `process_request`, `generate_audio`, `adk_pipeline`).
+-   **Attributes**: Each trace includes metadata like `session_id`, `model`, and `user_input`.
+
+### 2. Google Cloud Logging
+Structured logs for deep debugging.
+-   **Agent Thoughts**: View the raw output from the `Drafter` and `Critic` agents.
+-   **Tool Calls**: See exactly which tools were called and with what arguments.
+-   **Errors**: Stack traces and error messages are captured with full context.
+
+### 3. Session Logs (Local)
+JSON logs are also saved locally in `backend/logs/sessions/` for quick debugging without cloud access.
+
+### Configuration
+Update your `.env` file:
+```env
+GOOGLE_API_KEY=your_api_key
+ENABLE_CLOUD_TRACE=true
+GOOGLE_APPLICATION_CREDENTIALS=certs/albert-logger-GCP-key.json
+```
+
+
+
 ## Getting Started
 
 ### Prerequisites
@@ -176,31 +206,6 @@ graph TD
 
 
                      
-## Observability & Evaluation
-
-Albert is designed with enterprise-grade observability to help you debug agent behavior and optimize performance.
-
-### 1. Google Cloud Trace
-Visualize the full latency breakdown of your agent pipeline.
--   **Trace Spans**: See exactly how long each step takes (e.g., `process_request`, `generate_audio`, `adk_pipeline`).
--   **Attributes**: Each trace includes metadata like `session_id`, `model`, and `user_input`.
-
-### 2. Google Cloud Logging
-Structured logs for deep debugging.
--   **Agent Thoughts**: View the raw output from the `Drafter` and `Critic` agents.
--   **Tool Calls**: See exactly which tools were called and with what arguments.
--   **Errors**: Stack traces and error messages are captured with full context.
-
-### 3. Session Logs (Local)
-JSON logs are also saved locally in `backend/logs/sessions/` for quick debugging without cloud access.
-
-### Configuration
-Update your `.env` file:
-```env
-GOOGLE_API_KEY=your_api_key
-ENABLE_CLOUD_TRACE=true
-GOOGLE_APPLICATION_CREDENTIALS=certs/albert-logger-GCP-key.json
-```
 
 ## 📄 License
 MIT
