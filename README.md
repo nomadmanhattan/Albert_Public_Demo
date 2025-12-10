@@ -1,5 +1,5 @@
 # Albert - Your Personal News Concierge 🎙️🤖
-Demo [here]([url](https://youtu.be/bvodBYoqw-A))
+**Demo ([here](https://youtu.be/bvodBYoqw-A))**
 
 **Turn your email newsletters into a daily podcast!**
 
