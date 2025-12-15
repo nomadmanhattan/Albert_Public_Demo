@@ -1,28 +1,52 @@
-# Python
+# System
+.DS_Store
+setup_gcp.sh
+
+# Python / Backend
 __pycache__/
 *.py[cod]
 *$py.class
 venv/
 .env
+.pytest_cache/
+backend/logs/
+backend/data/user_context.json
+backend/browser_data/
+backend/certs/
+backend/digest_*.json
+backend/token.json
+backend/gmail_credentials.json
+token.json
+gmail_credentials.json
+**/*-key.json
+opentelemetry.env
 
-# Node
+# Node / Frontend
 node_modules/
 dist/
-.DS_Store
+.env.local
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Logs
-logs/
-*.log
-my_logs*.txt
-*output.txt
-browser_data/
-*.json
-*.png
 
-# Data
-data/
-certs/
+# Playwright
+test-results/
+playwright-report/
+automation_failure.png
 
-# IDE
+# Editor / IDE
 .vscode/
 .idea/
+*.sw?
+*.swo
+*.swn
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.gsheet
