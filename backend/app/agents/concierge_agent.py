@@ -2,11 +2,14 @@ import logging
 import uuid
 import os
 import json
+from datetime import datetime
 
 from app.services.cloud_logger import CloudLogger
 from app.agents.agent_workflow import AlbertAgentOrchestrator
 from app.services.tts_service import TextToSpeechService
 from google.adk.runners import InMemoryRunner
+from google.adk.apps.app import App
+from google.adk.agents.context_cache_config import ContextCacheConfig
 from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
@@ -20,11 +23,22 @@ class ConciergeAgent:
             logger.warning(f"Failed to initialize CloudLogger: {e}. Logging will be disabled.")
             self.cloud_logger = None
         
-        # Default to flash, but can be overridden in next iteraction by users.
+        # Initialize Orchestrator and Agent
         self.orchestrator = AlbertAgentOrchestrator()
-        self.runner = InMemoryRunner(
-            agent=self.orchestrator.create_agent()
+        root_agent = self.orchestrator.create_agent()
+
+        # Wrap with App and Context Caching
+        self.app = App(
+            name="albert-concierge",
+            root_agent=root_agent,
+            context_cache_config=ContextCacheConfig(
+                min_tokens=2000,
+                ttl_seconds=3600,
+                cache_intervals=3
+            )
         )
+
+        self.runner = InMemoryRunner(agent=self.app)
         
         # Initialize TTS Service
         try:
@@ -35,7 +49,7 @@ class ConciergeAgent:
 
     async def process_request(self, user_input: str) -> dict:
         """
-        Processes user input using the ADK pipeline.
+        Processes user input using the ADK pipeline with Smart Logging.
         """
         session_id = str(uuid.uuid4())
         model_name = self.orchestrator.model_name
@@ -43,6 +57,7 @@ class ConciergeAgent:
 
         response_text = ""
         action_taken = "adk_pipeline"
+        final_state = {}
         
         with tracer.start_as_current_span("process_request") as span:
             span.set_attribute("session_id", session_id)
@@ -52,14 +67,15 @@ class ConciergeAgent:
 
             try:
                 # Ensure session exists with initial state
-                app_name = getattr(self.runner, "app_name", "default")
+                app_name = getattr(self.runner, "app_name", "albert-concierge")
                 await self.runner.session_service.create_session(
                     session_id=session_id, 
                     user_id="user", 
                     app_name=app_name,
                     state={
                         "current_digest": "",
-                        "critique": ""
+                        "critique": "",
+                        "verbose_logging": False # Default to minimal logging
                     }
                 )
 
@@ -83,65 +99,43 @@ class ConciergeAgent:
                     # Trace and Log Intermediate Steps
                     if hasattr(event, "text") and event.text:
                         response_text = event.text
-                        # Log intermediate text events (potential agent outputs)
-                        if self.cloud_logger:
-                            self.cloud_logger.log_struct({
-                                "session_id": session_id,
-                                "step": "agent_output",
-                                "content": event.text[:1000], # Truncate for log
-                                "timestamp": datetime.now().isoformat()
-                            })
+                        # NOTE to self : to revisit after implementing smart logging to decide if intermediate logs is still needed.
+                        # For now, keep them debug level or minimal
                     
                     if hasattr(event, "tool_calls") and event.tool_calls:
                         logger.info(f"Tool called: {event.tool_calls}")
-                        if self.cloud_logger:
-                            self.cloud_logger.log_struct({
-                                "session_id": session_id,
-                                "step": "tool_call",
-                                "tool_calls": str(event.tool_calls),
-                                "timestamp": datetime.now().isoformat()
-                            })
+
+                    # Capture final state if available (simplified check)
+                    if hasattr(event, "actions") and event.actions and hasattr(event.actions, "state_delta"):
+                         final_state.update(event.actions.state_delta)
                 
-                if not response_text:
-                     # Fallback logic (same as before)
-                     session = await self.runner.session_service.get_session(
-                         session_id=session_id,
-                         user_id="user",
-                         app_name=app_name
-                     )
-                     if session and session.events:
+                # Fetch final state to check output keys
+                session = await self.runner.session_service.get_session(
+                    session_id=session_id,
+                    user_id="user",
+                    app_name=app_name
+                )
+                if session and session.events:
+                     # Attempt to find text if not captured
+                     if not response_text:
                          for event in reversed(session.events):
-                             if hasattr(event, "actions") and event.actions and hasattr(event.actions, "state_delta"):
-                                 state_delta = event.actions.state_delta
-                                 if state_delta and "current_digest" in state_delta:
-                                     response_text = state_delta["current_digest"]
-                                     logger.info("Found digest in state_delta.")
-                                     break
-                         
-                         if not response_text:
-                             # ... (rest of fallback logic)
-                             for event in reversed(session.events):
-                                 text = ""
-                                 if hasattr(event, "content") and event.content and hasattr(event.content, "parts"):
-                                     for part in event.content.parts:
-                                         if hasattr(part, "text") and part.text:
-                                             text += part.text
-                                 if text:
-                                     if len(text) > 100: 
-                                         response_text = text
-                                         break
-                                     elif not response_text:
-                                         response_text = text
-                
+                              if hasattr(event, "content") and event.content:
+                                   if isinstance(event.content, str):
+                                       response_text = event.content
+                                       break
+                                   elif hasattr(event.content, "parts"):
+                                       parts_text = "".join([p.text for p in event.content.parts if hasattr(p, "text")])
+                                       if parts_text:
+                                           response_text = parts_text
+                                           break
+
                 # Deterministic Audio Generation
-                if response_text:
+                if response_text and self.tts_service:
                     try:
                         logger.info("Generating audio for digest...")
-                        # Generate audio (run in thread to avoid blocking)
                         import asyncio
                         with tracer.start_as_current_span("generate_audio"):
                             audio_url = await asyncio.to_thread(self.tts_service.generate_audio, response_text)
-                            
                             logger.info(f"Audio generated successfully: {audio_url}")
                             
                             user_input_lower = user_input.lower()
@@ -156,41 +150,46 @@ class ConciergeAgent:
 
                     except Exception as e:
                         logger.error(f"Failed to generate audio: {e}")
-                        span.record_exception(e)
-                        # Don't show full text automatically on error, ask user.
-                        response_text = f"I'm sorry, I couldn't generate the audio digest due to an error: {str(e)}.\n\nWould you like to read the text instead?"
+                        response_text += f"\n(Audio generation failed: {str(e)})"
 
             except Exception as e:
                 logger.error(f"Error in ADK interaction: {e}")
                 response_text = f"I encountered an error: {str(e)}"
                 span.record_exception(e)
-                span.set_status(trace.Status(trace.StatusCode.ERROR))
+                action_taken = "error"
                 
-                # Log failure
                 if self.cloud_logger:
                     self.cloud_logger.log_struct({
                         "session_id": session_id,
-                        "user_input": user_input,
-                        "response": response_text,
-                        "action": "adk_pipeline_error",
-                        "model": model_name,
-                        "status": "error"
+                        "status": 500,
+                        "error": str(e),
+                        "action": "error_log"
                     })
 
-            # Log Success Session
-            if action_taken == "adk_pipeline":
-                 try:
-                    if self.cloud_logger:
-                        self.cloud_logger.log_struct({
+            # --- SMART LOGGING ---
+            # Inspect state or output keys to decide verbosity
+             
+            is_verbose = final_state.get("verbose_logging", False)
+            if self.cloud_logger:
+                if is_verbose or action_taken == "error":
+                     self.cloud_logger.log_struct({
                         "session_id": session_id,
                         "user_input": user_input,
                         "response": response_text[:5000],
                         "action": action_taken,
                         "model": model_name,
-                        "status": "success"
+                        "status": 200 if action_taken != "error" else 500,
+                        "log_type": "full"
                     })
-                 except Exception as e:
-                    logger.error(f"Failed to log to Cloud Logging: {e}")
+                else:
+                    # Minimal Log
+                    self.cloud_logger.log_struct({
+                        "session_id": session_id,
+                        "status": 200,
+                        "action": action_taken,
+                        "log_type": "minimal",
+                        "response_length": len(response_text)
+                    })
 
             return {
                 "response": response_text,
