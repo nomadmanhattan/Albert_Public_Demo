@@ -29,7 +29,7 @@ class ConciergeAgent:
 
         # Wrap with App and Context Caching
         self.app = App(
-            name="albert-concierge",
+            name="albert_concierge",
             root_agent=root_agent,
             context_cache_config=ContextCacheConfig(
                 min_tokens=2000,
@@ -38,7 +38,7 @@ class ConciergeAgent:
             )
         )
 
-        self.runner = InMemoryRunner(agent=self.app)
+        self.runner = InMemoryRunner(app=self.app)
         
         # Initialize TTS Service
         try:

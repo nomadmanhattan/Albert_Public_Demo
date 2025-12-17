@@ -18,17 +18,17 @@ async def run_e2e_test():
     agent = ConciergeAgent()
     
     # User query that triggers the full flow
-    user_query = "Create a digest for my 'To Read List/TL;DR - Verge' emails from the last 1 day. Then create a podcast."
+    user_query = "Create a digest for my emails updates from the last 1 day. Then create a podcast."
     
     logger.info(f"User Query: {user_query}")
     
     try:
-        # We use a model that supports function calling. 
-        # gemini-2.5-flash is set in main.py, let's use it here too.
-        result = await agent.process_request(user_query, model_name="gemini-2.5-flash")
+    
+        # Use gemini-2.5-flash 
+        result = await agent.process_request(user_query)
         
         logger.info("E2E Test Completed!")
-        logger.info(f"Agent Response: {result['text']}")
+        logger.info(f"Agent Response: {result['response']}")
         
     except Exception as e:
         logger.error(f"E2E Test Failed: {e}")
