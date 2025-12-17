@@ -146,8 +146,8 @@ GOOGLE_APPLICATION_CREDENTIALS=certs/albert-logger-GCP-key.json
 		
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/nomadmanhattan/Personal_News_Digest_Assistant.git
-    cd Personal_News_Digest_Assistant
+    git clone https://github.com/nomadmanhattan/Albert_Public_Demo.git
+    cd Albert_Public_Demo
     ```
 					
 2.  **Backend Setup**:
