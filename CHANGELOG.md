@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## main branch v1.1 (2025-12-17)
+## Min branch v1.1 (2025-12-17)
 
 ### Prvious Version
 - Albert Public Demo v1.0 (2025-12-2)
